@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -32,6 +34,21 @@ func print(conn net.Conn) {
 func proxy(conn net.Conn) {
 	defer conn.Close()
 
+	var buf bytes.Buffer
+	io.CopyN(&buf, conn, 15)
+	log.Println("peek:", buf.String())
+
+	prefix := ""
+	parts := strings.Split(buf.String(), " ")
+	if len(parts) > 1 {
+		paths := strings.Split(parts[1], "/")
+		if len(paths) > 1 {
+			prefix = paths[1]
+		}
+	}
+
+	log.Println("prefix:", prefix)
+
 	remote, err := net.Dial("tcp", "localhost:8081")
 	if err != nil {
 		log.Println(err)
@@ -39,6 +56,6 @@ func proxy(conn net.Conn) {
 	}
 	defer remote.Close()
 
-	go io.Copy(remote, conn)
+	go io.Copy(remote, io.MultiReader(&buf, conn))
 	io.Copy(conn, remote)
 }
