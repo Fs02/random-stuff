@@ -31,6 +31,11 @@ func print(conn net.Conn) {
 	io.Copy(os.Stdout, conn)
 }
 
+var remotes = map[string]string{
+	"hello": "localhost:8081",
+	"other": "localhost:8082",
+}
+
 func proxy(conn net.Conn) {
 	defer conn.Close()
 
@@ -47,9 +52,12 @@ func proxy(conn net.Conn) {
 		}
 	}
 
-	log.Println("prefix:", prefix)
+	if remotes[prefix] == "" {
+		conn.Write([]byte("HTTP/1.1 404 Not found\r\nContent-Length: 0\r\n\r\n"))
+		return
+	}
 
-	remote, err := net.Dial("tcp", "localhost:8081")
+	remote, err := net.Dial("tcp", remotes[prefix])
 	if err != nil {
 		log.Println(err)
 		return
