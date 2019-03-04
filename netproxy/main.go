@@ -64,6 +64,8 @@ func proxy(conn net.Conn) {
 	}
 	defer remote.Close()
 
-	go io.Copy(remote, io.MultiReader(&buf, conn))
+	reroutePrefix := strings.NewReader(strings.Replace(buf.String(), "/"+prefix, "", 1))
+
+	go io.Copy(remote, io.MultiReader(reroutePrefix, conn))
 	io.Copy(conn, remote)
 }
