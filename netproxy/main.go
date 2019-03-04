@@ -20,11 +20,25 @@ func main() {
 		}
 
 		log.Println("connected:", conn.RemoteAddr())
-		go print(conn)
+		go request(conn)
 	}
 }
 
 func print(conn net.Conn) {
 	defer conn.Close()
 	io.Copy(os.Stdout, conn)
+}
+
+func request(conn net.Conn) {
+	defer conn.Close()
+
+	remote, err := net.Dial("tcp", "localhost:8081")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer remote.Close()
+
+	remote.Write([]byte("GET / HTTP/1.0\r\n\r\n"))
+	io.Copy(conn, remote)
 }
