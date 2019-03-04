@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -20,6 +21,7 @@ func main() {
 			log.Println(err)
 			return
 		}
+		conn.SetDeadline(time.Now().Add(5 * time.Second))
 
 		log.Println("connected:", conn.RemoteAddr())
 		go proxy(conn)
@@ -63,6 +65,7 @@ func proxy(conn net.Conn) {
 		return
 	}
 	defer remote.Close()
+	remote.SetDeadline(time.Now().Add(5 * time.Second))
 
 	reroutePrefix := strings.NewReader(strings.Replace(buf.String(), "/"+prefix, "", 1))
 
